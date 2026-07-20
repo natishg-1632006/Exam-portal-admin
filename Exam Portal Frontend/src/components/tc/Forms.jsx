@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Drawer, Field, inputCls, selectCls } from './Shared';
 import { useToast } from './Toast';
 import { getQuestionSets } from '../../data/questionSets';
-import { FiClock, FiDatabase, FiCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiClock, FiDatabase, FiCheck, FiAlertTriangle, FiArrowRight } from 'react-icons/fi';
 
 export function CreateTestDrawer({ isOpen, onClose, onSave, initial }) {
   const toast = useToast();
@@ -134,7 +134,15 @@ export function CreateTestDrawer({ isOpen, onClose, onSave, initial }) {
   );
 }
 
-export function CreateSectionModal({ isOpen, onClose, onSave, initial, testDuration = 90, existingDurationSum = 0 }) {
+export function CreateSectionModal({
+  isOpen,
+  onClose,
+  onSave,
+  initial,
+  testDuration = 90,
+  existingDurationSum = 0,
+  onRedirectToUpdateTest,
+}) {
   const toast = useToast();
   const availableQuestionSets = getQuestionSets();
 
@@ -203,14 +211,22 @@ export function CreateSectionModal({ isOpen, onClose, onSave, initial, testDurat
 
   const handleSave = () => {
     if (!validate()) return;
+
     if (isOverDuration) {
+      // BLOCK adding section & REDIRECT to update test duration first!
       toast({
-        type: 'warning',
-        title: 'Time Limit Warning',
-        message: `Allocated section time (${projectTotalDuration} min) exceeds test duration (${testDuration} min) by ${excessTime} min!`,
+        type: 'error',
+        title: 'Cannot Add Section — Time Exceeded',
+        message: `Total time (${projectTotalDuration} min) exceeds overall test limit (${testDuration} min) by ${excessTime} min. Redirecting to update test duration...`,
         duration: 5000,
       });
+      onClose();
+      if (onRedirectToUpdateTest) {
+        onRedirectToUpdateTest();
+      }
+      return;
     }
+
     onSave(form);
     onClose();
   };
@@ -304,15 +320,20 @@ export function CreateSectionModal({ isOpen, onClose, onSave, initial, testDurat
             </Field>
           </div>
 
-          {/* Duration Overuse Warning Notice */}
+          {/* Duration Overuse Warning Notice & Redirect Prompt */}
           {isOverDuration ? (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-2.5 text-xs text-red-700">
-              <FiAlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">More time allocated than total test duration!</p>
-                <p className="text-[11px] text-red-600 mt-0.5">
-                  Allocated section time is <span className="font-bold">{projectTotalDuration} min</span>, which exceeds the overall test duration (<span className="font-bold">{testDuration} min</span>) by <span className="font-bold">{excessTime} min</span>.
-                </p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-2 text-xs text-red-700">
+              <div className="flex items-start space-x-2.5">
+                <FiAlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Total section time exceeds test duration limit!</p>
+                  <p className="text-[11px] text-red-600 mt-0.5">
+                    Adding this section requires <span className="font-bold">{projectTotalDuration} min</span> total, which exceeds the test duration (<span className="font-bold">{testDuration} min</span>) by <span className="font-bold">{excessTime} min</span>.
+                  </p>
+                  <p className="text-[11px] font-semibold text-red-800 mt-1">
+                    👉 Section cannot be added until you update the overall test duration.
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
@@ -345,9 +366,19 @@ export function CreateSectionModal({ isOpen, onClose, onSave, initial, testDurat
 
         <div className="px-6 py-4 border-t border-slate-100 flex justify-end space-x-3 bg-slate-50/50 flex-shrink-0">
           <button onClick={onClose} className="px-4 py-2 border border-slate-200 text-slate-600 rounded-[10px] font-semibold text-xs hover:bg-slate-50">Cancel</button>
-          <button onClick={handleSave} className="px-5 py-2 bg-[#2563EB] text-white rounded-[10px] font-semibold text-xs hover:bg-blue-700 shadow-sm">
-            {initial ? 'Save Changes' : '+ Integrate Question Set'}
-          </button>
+          
+          {isOverDuration ? (
+            <button
+              onClick={handleSave}
+              className="flex items-center px-5 py-2 bg-red-600 text-white rounded-[10px] font-semibold text-xs hover:bg-red-700 shadow-sm"
+            >
+              Update Test Time First <FiArrowRight className="w-3.5 h-3.5 ml-1.5" />
+            </button>
+          ) : (
+            <button onClick={handleSave} className="px-5 py-2 bg-[#2563EB] text-white rounded-[10px] font-semibold text-xs hover:bg-blue-700 shadow-sm">
+              {initial ? 'Save Changes' : '+ Integrate Question Set'}
+            </button>
+          )}
         </div>
       </div>
     </div>

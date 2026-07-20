@@ -388,6 +388,7 @@ export default function TestDetailsPage() {
         initial={editSection}
         testDuration={testData.durationMinutes}
         existingDurationSum={existingDurationSum}
+        onRedirectToUpdateTest={() => setEditDrawerOpen(true)}
       />
       <ConfirmDialog isOpen={!!deleteSection} title="Delete Section?" description="All questions in this section will also be soft-deleted." onConfirm={handleDeleteSection} onCancel={() => setDeleteSection(null)} />
       <ConfirmDialog isOpen={deleteTest} title="Delete Test?" description={`"${testData.title}" will be soft-deleted.`} onConfirm={handleDeleteTest} onCancel={() => setDeleteTest(false)} />

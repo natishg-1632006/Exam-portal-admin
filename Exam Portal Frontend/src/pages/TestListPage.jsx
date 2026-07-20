@@ -13,26 +13,30 @@ import MOCK_TESTS from '../data/testConfig';
 
 const STATUSES = ['All', 'Draft', 'Published', 'Archived'];
 
-function ActionMenu({ test, onView, onEdit, onDelete, onPublish }) {
-  const [open, setOpen] = useState(false);
-  const ref = React.useRef();
-
-  React.useEffect(() => {
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, []);
-
+function ActionMenu({ test, onView, onEdit, onDelete }) {
   return (
-    <div className="relative flex items-center justify-end space-x-1" ref={ref}>
-      <button onClick={() => onView(test)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-[#2563EB] hover:bg-blue-50 rounded-[8px] transition-all" title="View"><FiEye className="w-3.5 h-3.5" /></button>
-      <button onClick={() => onEdit(test)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-[8px] transition-all" title="Edit"><FiEdit2 className="w-3.5 h-3.5" /></button>
-      <button onClick={() => onDelete(test)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-[8px] transition-all" title="Delete"><FiTrash2 className="w-3.5 h-3.5" /></button>
-      {test.status !== 'Published' && (
-        <button onClick={() => onPublish(test)} className="flex items-center px-2.5 py-1 text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 hover:bg-green-100 rounded-[8px] transition-all" title="Publish">
-          <FiGlobe className="w-3 h-3 mr-1" /> Publish
-        </button>
-      )}
+    <div className="flex items-center justify-end space-x-1">
+      <button
+        onClick={(e) => { e.stopPropagation(); onView(test); }}
+        className="w-7.5 h-7.5 flex items-center justify-center text-slate-400 hover:text-[#2563EB] hover:bg-blue-50 rounded-[8px] transition-all flex-shrink-0"
+        title="View Details"
+      >
+        <FiEye className="w-4 h-4" />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onEdit(test); }}
+        className="w-7.5 h-7.5 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-[8px] transition-all flex-shrink-0"
+        title="Edit Test"
+      >
+        <FiEdit2 className="w-3.5 h-3.5" />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(test); }}
+        className="w-7.5 h-7.5 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-[8px] transition-all flex-shrink-0"
+        title="Delete Test"
+      >
+        <FiTrash2 className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
@@ -86,9 +90,11 @@ export default function TestListPage() {
     setDeleteTarget(null);
   };
 
-  const handlePublish = (test) => {
-    setTests(prev => prev.map(t => t.testId === test.testId ? { ...t, status: 'Published' } : t));
-    toast({ type: 'success', title: 'Published!', message: `"${test.title}" is now live.` });
+  const handleToggleStatus = (test, e) => {
+    e.stopPropagation();
+    const nextStatus = test.status === 'Draft' ? 'Published' : test.status === 'Published' ? 'Archived' : 'Draft';
+    setTests(prev => prev.map(t => t.testId === test.testId ? { ...t, status: nextStatus } : t));
+    toast({ type: 'info', title: 'Status Changed', message: `"${test.title}" is now ${nextStatus}.` });
   };
 
   return (
@@ -141,18 +147,18 @@ export default function TestListPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Container */}
       <div className="bg-white rounded-[14px] border border-slate-200/80 shadow-sm overflow-hidden">
-        <table className="w-full">
+        <table className="w-full table-auto">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/40 text-left">
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[35%]">Test Name</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Marks</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sections</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Questions</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Created</th>
+              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[32%]">Test Name</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Marks</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sections</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Questions</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Created</th>
               <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
             </tr>
           </thead>
@@ -194,27 +200,28 @@ export default function TestListPage() {
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <span className="flex items-center text-xs text-slate-600 font-medium">
                     <FiClock className="w-3.5 h-3.5 mr-1 text-slate-400" />{test.durationMinutes} min
                   </span>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <span className="flex items-center text-xs text-slate-600 font-medium">
                     <FiAward className="w-3.5 h-3.5 mr-1 text-slate-400" />{test.totalMarks}
                   </span>
                 </td>
-                <td className="px-5 py-4 text-xs font-semibold text-slate-700">{test.sectionsCount}</td>
-                <td className="px-5 py-4 text-xs font-semibold text-slate-700">{test.questionsCount}</td>
-                <td className="px-5 py-4"><Badge status={test.status} /></td>
-                <td className="px-5 py-4 text-xs text-slate-400">{test.createdAt}</td>
-                <td className="px-5 py-4 text-right" onClick={e => e.stopPropagation()}>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">{test.sectionsCount}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">{test.questionsCount}</td>
+                <td className="px-4 py-4 whitespace-nowrap" onClick={(e) => handleToggleStatus(test, e)} title="Click to change status">
+                  <Badge status={test.status} />
+                </td>
+                <td className="px-4 py-4 text-xs text-slate-400 whitespace-nowrap">{test.createdAt}</td>
+                <td className="px-5 py-4 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
                   <ActionMenu
                     test={test}
                     onView={t => navigate(`/test-configuration/details/${t.testId}`)}
                     onEdit={t => { setEditTest(t); setDrawerOpen(true); }}
                     onDelete={t => setDeleteTarget(t)}
-                    onPublish={handlePublish}
                   />
                 </td>
               </motion.tr>
