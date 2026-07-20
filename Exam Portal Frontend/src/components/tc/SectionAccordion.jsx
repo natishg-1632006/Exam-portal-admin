@@ -26,7 +26,7 @@ function QuestionCard({ question }) {
 
       {/* Options — MCQ */}
       {question.type === 'MCQ' && question.options?.length > 0 && (
-        <div className="px-4 pb-3 space-y-1.5">
+        <div className="px-4 pb-4 space-y-1.5">
           {question.options.map((opt, i) => {
             const isCorrect = opt.optionId === question.correctOptionId;
             return (
@@ -47,14 +47,6 @@ function QuestionCard({ question }) {
           })}
         </div>
       )}
-
-      {/* Footer Marks */}
-      <div className="px-4 pb-3 pt-1 flex items-center space-x-4 border-t border-slate-100 mt-1">
-        <span className="text-[11px] font-semibold text-green-600">+{question.marks} marks</span>
-        {question.negativeMarks > 0 && (
-          <span className="text-[11px] font-semibold text-red-500">-{question.negativeMarks} negative</span>
-        )}
-      </div>
     </motion.div>
   );
 }
@@ -87,10 +79,7 @@ function SectionAccordion({ section, onEditSection, onDeleteSection }) {
           <div className="flex items-center space-x-3 mt-0.5 text-[11px] text-slate-400 font-medium">
             <span>{activeQuestions.length} questions</span>
             <span>•</span>
-            <span>{section.totalMarks} marks</span>
-            <span>•</span>
             <span className="text-amber-600 font-semibold flex items-center"><span className="mr-0.5">⏱</span>{section.durationMinutes || 30} min limit</span>
-            {section.questionSetId && <><span>•</span><span className="text-slate-500 font-medium bg-slate-100 px-1.5 py-0.2 rounded">Set: {section.questionSetId}</span></>}
           </div>
         </div>
         <div className="flex items-center space-x-1 ml-3" onClick={e => e.stopPropagation()}>

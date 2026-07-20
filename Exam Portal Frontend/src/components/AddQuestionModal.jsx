@@ -4,9 +4,6 @@ export default function AddQuestionModal({ isOpen, onClose, onSave, initialData 
   const [text, setText] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [correctAnswer, setCorrectAnswer] = useState('');
-  const [marks, setMarks] = useState(5);
-  const [randomize, setRandomize] = useState(true);
-  const [status, setStatus] = useState('Active');
 
   useEffect(() => {
     if (isOpen) {
@@ -14,16 +11,10 @@ export default function AddQuestionModal({ isOpen, onClose, onSave, initialData 
         setText(initialData.text || '');
         setOptions(initialData.options && initialData.options.length >= 2 ? initialData.options : ['', '']);
         setCorrectAnswer(initialData.correctAnswer || '');
-        setMarks(initialData.marks || 5);
-        setRandomize(initialData.randomize !== undefined ? initialData.randomize : true);
-        setStatus(initialData.status || 'Active');
       } else {
         setText('');
         setOptions(['', '']);
         setCorrectAnswer('');
-        setMarks(5);
-        setRandomize(true);
-        setStatus('Active');
       }
     }
   }, [isOpen, initialData]);
@@ -42,7 +33,6 @@ export default function AddQuestionModal({ isOpen, onClose, onSave, initialData 
     if (options.length <= 2) return;
     const newOpts = options.filter((_, i) => i !== idx);
     setOptions(newOpts);
-    // If removed option was correct answer, reset correct answer
     const removedLabel = `Option ${optionLabels[idx]}`;
     if (correctAnswer === removedLabel) setCorrectAnswer('');
   };
@@ -60,13 +50,7 @@ export default function AddQuestionModal({ isOpen, onClose, onSave, initialData 
     if (!text.trim()) { alert('Please enter the question content.'); return; }
     if (options.some(opt => !opt.trim())) { alert('Please fill in all answer option fields.'); return; }
     if (!correctAnswer) { alert('Please select the correct answer.'); return; }
-    onSave({ text, options, correctAnswer, marks, randomize, status });
-  };
-
-  const statusConfig = {
-    Active: 'bg-emerald-50 text-emerald-700 border-emerald-100 ring-emerald-300',
-    Review: 'bg-amber-50 text-amber-700 border-amber-100 ring-amber-300',
-    Error: 'bg-rose-50 text-rose-700 border-rose-100 ring-rose-300',
+    onSave({ text, options, correctAnswer });
   };
 
   return (
@@ -145,74 +129,26 @@ export default function AddQuestionModal({ isOpen, onClose, onSave, initialData 
             <p className="text-[9px] text-slate-400 mt-1.5">Minimum 2 options, maximum 8. Hover an option to remove it.</p>
           </div>
 
-          {/* Correct Answer + Marks + Status row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Correct Answer</label>
-              <div className="relative">
-                <select
-                  value={correctAnswer}
-                  onChange={(e) => setCorrectAnswer(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-1.5 focus:ring-[#0B4A99] focus:border-[#0B4A99] bg-white transition-all"
-                >
-                  <option value="">Select Answer</option>
-                  {options.map((opt, idx) => (
-                    <option key={idx} value={`Option ${optionLabels[idx]}`} disabled={!opt.trim()}>
-                      Option {optionLabels[idx]}{opt.trim() ? ` - ${opt.slice(0, 20)}${opt.length > 20 ? '…' : ''}` : ' (empty)'}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
+          {/* Correct Answer Selection */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Correct Answer</label>
+            <div className="relative">
+              <select
+                value={correctAnswer}
+                onChange={(e) => setCorrectAnswer(e.target.value)}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-1.5 focus:ring-[#0B4A99] focus:border-[#0B4A99] bg-white transition-all"
+              >
+                <option value="">Select Answer</option>
+                {options.map((opt, idx) => (
+                  <option key={idx} value={`Option ${optionLabels[idx]}`} disabled={!opt.trim()}>
+                    Option {optionLabels[idx]}{opt.trim() ? ` - ${opt.slice(0, 20)}${opt.length > 20 ? '…' : ''}` : ' (empty)'}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Marks</label>
-              <input
-                type="number"
-                min={1}
-                value={marks}
-                onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1.5 focus:ring-[#0B4A99] focus:border-[#0B4A99] transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Status Selector */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Question Status</label>
-            <div className="flex space-x-2">
-              {['Active', 'Review', 'Error'].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatus(s)}
-                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
-                    status === s
-                      ? `${statusConfig[s]} ring-1`
-                      : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Randomize Toggle */}
-          <div className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-xl border border-slate-150">
-            <div>
-              <h4 className="text-[11px] font-semibold text-slate-700">Randomize Options</h4>
-              <p className="text-[9px] text-slate-400 font-medium mt-0.5">Shuffle options for each candidate</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setRandomize(!randomize)}
-              className={`w-9 h-5 rounded-full relative flex items-center px-0.5 transition-colors duration-200 ${randomize ? 'bg-[#0B4A99]' : 'bg-slate-300'}`}
-            >
-              <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform duration-200 ${randomize ? 'translate-x-4' : 'translate-x-0'}`}></div>
-            </button>
           </div>
         </div>
 

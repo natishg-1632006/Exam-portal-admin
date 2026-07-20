@@ -4,12 +4,11 @@ import DashboardOverview from './components/DashboardOverview';
 import QuestionSetDetail from './components/QuestionSetDetail';
 import CreateSetModal from './components/CreateSetModal';
 import AddQuestionModal from './components/AddQuestionModal';
-import ImportCSVModal from './components/ImportCSVModal';
 
 const INITIAL_SETS = [
-  { id: 1, name: 'Java Basics', updated: 'Last updated 2 days ago', desc: 'Foundational Java concepts including syntax, memory management, and OOP principles.', questionsCount: 4, status: 'Active', category: 'Backend' },
-  { id: 2, name: 'React Advanced', updated: 'Last updated 1 week ago', desc: 'Hooks, Context API, suspense, custom rendering, and architectural patterns.', questionsCount: 0, status: 'Active', category: 'Frontend' },
-  { id: 3, name: 'Python Data Structures', updated: 'Last updated 5 hours ago', desc: 'Comprehensive lists, dictionaries, trees, graphs, and time complexity analysis.', questionsCount: 0, status: 'Draft', category: 'Data Science' }
+  { id: 1, name: 'Java Basics', updated: 'Last updated 2 days ago', questionsCount: 4, status: 'Active' },
+  { id: 2, name: 'React Advanced', updated: 'Last updated 1 week ago', questionsCount: 0, status: 'Active' },
+  { id: 3, name: 'Python Data Structures', updated: 'Last updated 5 hours ago', questionsCount: 0, status: 'Draft' }
 ];
 
 const INITIAL_QUESTIONS = [
@@ -29,7 +28,6 @@ export default function QuestionBankApp() {
   const [currentSetId, setCurrentSetId] = useState(null);
   const [isCreateSetOpen, setIsCreateSetOpen] = useState(false);
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false);
-  const [isImportCSVOpen, setIsImportCSVOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [editingSet, setEditingSet] = useState(null);
 
@@ -96,14 +94,6 @@ export default function QuestionBankApp() {
     setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, status: newStatus, ...meta } : q));
   };
 
-  const handleImportCSV = (importedQuestions) => {
-    const meta = STATUS_META.Active;
-    const newQuestions = importedQuestions.map((q) => ({ id: Date.now() + Math.random(), setId: currentSetId, text: q.text, marks: q.marks, options: q.options, correctAnswer: q.correctAnswer, randomize: q.randomize, status: q.status || 'Active', ...(STATUS_META[q.status] || meta), date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) }));
-    setQuestions(prev => [...prev, ...newQuestions]);
-    setSets(prev => prev.map(s => s.id === currentSetId ? { ...s, questionsCount: s.questionsCount + newQuestions.length } : s));
-    setIsImportCSVOpen(false);
-  };
-
   const activeSet = sets.find(s => s.id === currentSetId);
   const activeQuestions = questions.filter(q => q.setId === currentSetId);
 
@@ -128,14 +118,12 @@ export default function QuestionBankApp() {
           onDeleteQuestion={handleDeleteQuestion}
           onArchiveSet={handleToggleArchiveSet}
           onEditSet={handleEditSetClick}
-          onImportCSV={() => setIsImportCSVOpen(true)}
           onChangeStatus={handleChangeQuestionStatus}
         />
       )}
 
       <CreateSetModal isOpen={isCreateSetOpen} onClose={() => { setIsCreateSetOpen(false); setEditingSet(null); }} onSave={handleSaveSet} initialData={editingSet} />
       <AddQuestionModal isOpen={isAddQuestionOpen} onClose={() => { setIsAddQuestionOpen(false); setEditingQuestion(null); }} onSave={handleSaveQuestion} initialData={editingQuestion} />
-      <ImportCSVModal isOpen={isImportCSVOpen} onClose={() => setIsImportCSVOpen(false)} onImport={handleImportCSV} />
     </>
   );
 }

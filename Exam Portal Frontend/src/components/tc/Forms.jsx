@@ -49,26 +49,15 @@ export function CreateTestDrawer({ isOpen, onClose, onSave, initial }) {
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Overall Duration (min)" required error={errors.durationMinutes} hint="Total allowed time for candidates">
-            <input
-              type="number"
-              min={1}
-              value={form.durationMinutes}
-              onChange={e => set('durationMinutes', +e.target.value)}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Total Marks" required error={errors.totalMarks}>
-            <input
-              type="number"
-              min={1}
-              value={form.totalMarks}
-              onChange={e => set('totalMarks', +e.target.value)}
-              className={inputCls}
-            />
-          </Field>
-        </div>
+        <Field label="Overall Duration (min)" required error={errors.durationMinutes} hint="Total allowed time for candidates">
+          <input
+            type="number"
+            min={1}
+            value={form.durationMinutes}
+            onChange={e => set('durationMinutes', +e.target.value)}
+            className={inputCls}
+          />
+        </Field>
 
         <Field label="Description" hint="Optional — visible to candidates before the exam">
           <textarea
@@ -105,7 +94,6 @@ export function CreateTestDrawer({ isOpen, onClose, onSave, initial }) {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { l: 'Duration', v: `${form.durationMinutes} min` },
-                { l: 'Total Marks', v: form.totalMarks },
                 { l: 'Status', v: form.status },
               ].map(item => (
                 <div key={item.l} className="bg-white rounded-xl p-2.5 border border-slate-100">
@@ -295,30 +283,18 @@ export function CreateSectionModal({
           </Field>
 
           {/* Specific Time Duration for this Question Set / Section */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Set Time Duration (minutes)" required error={errors.durationMinutes} hint="Time limit for this specific set">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={1}
-                  value={form.durationMinutes}
-                  onChange={e => set('durationMinutes', +e.target.value)}
-                  className={inputCls}
-                />
-                <FiClock className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-              </div>
-            </Field>
-
-            <Field label="Total Section Marks">
+          <Field label="Set Time Duration (minutes)" required error={errors.durationMinutes} hint="Time limit for this specific set">
+            <div className="relative">
               <input
                 type="number"
-                min={0}
-                value={form.totalMarks}
-                onChange={e => set('totalMarks', +e.target.value)}
+                min={1}
+                value={form.durationMinutes}
+                onChange={e => set('durationMinutes', +e.target.value)}
                 className={inputCls}
               />
-            </Field>
-          </div>
+              <FiClock className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+            </div>
+          </Field>
 
           {/* Duration Overuse Warning Notice & Redirect Prompt */}
           {isOverDuration ? (
@@ -343,25 +319,15 @@ export function CreateSectionModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Display Order">
-              <input
-                type="number"
-                min={1}
-                value={form.displayOrder}
-                onChange={e => set('displayOrder', +e.target.value)}
-                className={inputCls}
-              />
-            </Field>
-            <Field label="Question Set ID">
-              <input
-                value={form.questionSetId}
-                onChange={e => set('questionSetId', e.target.value)}
-                placeholder="e.g. QS-101"
-                className={inputCls}
-              />
-            </Field>
-          </div>
+          <Field label="Display Order">
+            <input
+              type="number"
+              min={1}
+              value={form.displayOrder}
+              onChange={e => set('displayOrder', +e.target.value)}
+              className={inputCls}
+            />
+          </Field>
         </div>
 
         <div className="px-6 py-4 border-t border-slate-100 flex justify-end space-x-3 bg-slate-50/50 flex-shrink-0">

@@ -9,7 +9,7 @@ import { Badge, StatMini, ConfirmDialog, EmptyState } from '../components/tc/Sha
 import SectionAccordion from '../components/tc/SectionAccordion';
 import { CreateTestDrawer, CreateSectionModal } from '../components/tc/Forms';
 import { useToast } from '../components/tc/Toast';
-import MOCK_TESTS from '../data/testConfig';
+import MOCK_TESTS, { getTestById, saveTest } from '../data/testConfig';
 
 /* ─── Complete View Modal ─────────────────────────────────────────── */
 function CompleteViewModal({ test, onClose }) {
@@ -40,7 +40,6 @@ function CompleteViewModal({ test, onClose }) {
             </div>
             <div className="flex items-center space-x-4 mt-3 text-blue-200 text-xs">
               <span>⏱ {test.durationMinutes} min</span>
-              <span>• 🎯 {test.totalMarks} marks</span>
               <span>• 📚 {(test.sections || []).filter(s => !s.isDeleted).length} sections</span>
             </div>
             {test.description && <p className="text-blue-100 text-xs mt-2 leading-relaxed">{test.description}</p>}
@@ -54,8 +53,6 @@ function CompleteViewModal({ test, onClose }) {
                 <h4 className="font-bold text-slate-700 text-sm">{sec.title}</h4>
                 <div className="ml-auto flex items-center space-x-3 text-[11px] font-medium">
                   <span className="text-amber-600 font-semibold">⏱ {sec.durationMinutes || 30} min</span>
-                  <span className="text-slate-400">•</span>
-                  <span className="text-slate-500">{sec.totalMarks} marks</span>
                 </div>
               </div>
               <div className="p-4 space-y-3">
@@ -66,8 +63,6 @@ function CompleteViewModal({ test, onClose }) {
                       <div className="flex items-center space-x-1.5">
                         <Badge status={q.difficulty} size="xs" />
                         <Badge status={q.type} size="xs" />
-                        <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">+{q.marks}</span>
-                        {q.negativeMarks > 0 && <span className="text-[10px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">-{q.negativeMarks}</span>}
                       </div>
                     </div>
                     <p className="text-sm font-medium text-slate-800 mb-2.5 leading-relaxed">{q.question}</p>
@@ -105,10 +100,19 @@ export default function TestDetailsPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [testData, setTestData] = useState(() => {
-    const t = MOCK_TESTS.find(t => t.testId === id);
+  const [testData, setTestDataState] = useState(() => {
+    const t = getTestById(id);
     return t ? JSON.parse(JSON.stringify(t)) : null;
   });
+
+  const setTestData = (updater) => {
+    setTestDataState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (next) saveTest(next);
+      return next;
+    });
+  };
+
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
   const [editSection, setEditSection] = useState(null);
@@ -122,7 +126,7 @@ export default function TestDetailsPage() {
   if (!testData) return (
     <div className="text-center py-20 text-slate-400">
       <p className="text-sm font-medium">Test not found.</p>
-      <button onClick={() => navigate('/test-configuration')} className="mt-4 px-4 py-2 bg-[#2563EB] text-white rounded-[10px] text-xs font-semibold">Back</button>
+      <button onClick={() => navigate('/test-configuration')} className="mt-4 px-4 py-2 bg-[#2563EB] text-white rounded-[10px] text-xs font-semibold">Back to Test Configuration</button>
     </div>
   );
 
@@ -253,10 +257,9 @@ export default function TestDetailsPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
               { icon: <FiClock className="w-4 h-4" />, label: 'Overall Duration', value: `${testData.durationMinutes} min`, color: 'blue' },
-              { icon: <FiAward className="w-4 h-4" />, label: 'Total Marks', value: testData.totalMarks, color: 'amber' },
               { icon: <FiLayers className="w-4 h-4" />, label: 'Sections', value: activeSections.length, color: 'slate' },
               { icon: <FiCheckCircle className="w-4 h-4" />, label: 'Questions', value: totalQuestions, color: 'green' },
             ].map(item => (

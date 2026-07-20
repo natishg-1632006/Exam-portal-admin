@@ -15,7 +15,7 @@ export default function DashboardOverview({ sets, onNavigateToSet, onCreateSet, 
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-[22px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h2>
-          <p className="text-slate-400 text-xs mt-1">Manage your talent assessment architecture.</p>
+          <p className="text-slate-400 text-xs mt-1">Manage your question sets.</p>
         </div>
         <button 
           onClick={onCreateSet} 
@@ -118,15 +118,6 @@ export default function DashboardOverview({ sets, onNavigateToSet, onCreateSet, 
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-            
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden h-7">
-              <button className="px-2.5 bg-white text-slate-400 hover:text-slate-600 border-r border-slate-200 flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-              </button>
-              <button className="px-2.5 bg-slate-50 text-slate-600 flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-              </button>
-            </div>
           </div>
         </div>
         
@@ -134,8 +125,7 @@ export default function DashboardOverview({ sets, onNavigateToSet, onCreateSet, 
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
-              <th className="px-5 py-3 w-1/4">Set Name</th>
-              <th className="px-5 py-3 w-2/5">Description</th>
+              <th className="px-5 py-3 w-1/2">Set Name</th>
               <th className="px-5 py-3">Questions</th>
               <th className="px-5 py-3">Status</th>
               <th className="px-5 py-3 text-right">Actions</th>
@@ -161,7 +151,6 @@ export default function DashboardOverview({ sets, onNavigateToSet, onCreateSet, 
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-xs text-slate-500 font-normal leading-relaxed">{set.desc}</td>
                 <td className="px-5 py-4">
                   <span className="font-bold text-slate-800 text-xs">{set.questionsCount || 0}</span>
                   <span className="text-[10px] text-slate-400 font-medium ml-1">Questions</span>
@@ -182,7 +171,7 @@ export default function DashboardOverview({ sets, onNavigateToSet, onCreateSet, 
                 <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end h-5">
                     {/* Default Actions: Triple Dot */}
-                    <div className="group-hover:hidden text-slate-450">
+                    <div className="group-hover:hidden text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
                     </div>
                     {/* Hover Actions: Direct Icon Buttons */}

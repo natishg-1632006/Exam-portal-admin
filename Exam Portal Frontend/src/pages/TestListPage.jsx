@@ -9,7 +9,7 @@ import {
 import { Badge, StatMini, ConfirmDialog, SkeletonRow, EmptyState } from '../components/tc/Shared';
 import { CreateTestDrawer } from '../components/tc/Forms';
 import { useToast } from '../components/tc/Toast';
-import MOCK_TESTS from '../data/testConfig';
+import { getTestsStore, saveTestsStore } from '../data/testConfig';
 
 const STATUSES = ['All', 'Draft', 'Published', 'Archived'];
 
@@ -44,7 +44,7 @@ function ActionMenu({ test, onView, onEdit, onDelete }) {
 export default function TestListPage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [tests, setTests] = useState(MOCK_TESTS.filter(t => !t.isDeleted));
+  const [tests, setTests] = useState(() => getTestsStore().filter(t => !t.isDeleted));
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -71,21 +71,34 @@ export default function TestListPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
+  const updateAndPersistTests = (updater) => {
+    setTests(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveTestsStore(next);
+      return next;
+    });
+  };
+
   const handleSaveTest = (data) => {
+    let targetId;
     if (editTest) {
-      setTests(prev => prev.map(t => t.testId === editTest.testId ? { ...t, ...data, updatedAt: new Date().toISOString().split('T')[0] } : t));
+      targetId = editTest.testId;
+      updateAndPersistTests(prev => prev.map(t => t.testId === editTest.testId ? { ...t, ...data, updatedAt: new Date().toISOString().split('T')[0] } : t));
       toast({ type: 'success', title: 'Test Updated', message: `"${data.title}" has been updated.` });
     } else {
-      const newTest = { testId: `TEST-${Date.now()}`, ...data, sectionsCount: 0, questionsCount: 0, createdAt: new Date().toISOString().split('T')[0], updatedAt: new Date().toISOString().split('T')[0], isDeleted: false, sections: [] };
-      setTests(prev => [newTest, ...prev]);
+      targetId = `TEST-${Date.now()}`;
+      const newTest = { testId: targetId, ...data, sectionsCount: 0, questionsCount: 0, createdAt: new Date().toISOString().split('T')[0], updatedAt: new Date().toISOString().split('T')[0], isDeleted: false, sections: [] };
+      updateAndPersistTests(prev => [newTest, ...prev]);
       toast({ type: 'success', title: 'Test Created', message: `"${data.title}" has been created.` });
     }
     setEditTest(null);
     setDrawerOpen(false);
+    // Immediately navigate to details page of the newly created/edited test!
+    navigate(`/test-configuration/details/${targetId}`);
   };
 
   const handleDelete = () => {
-    setTests(prev => prev.map(t => t.testId === deleteTarget.testId ? { ...t, isDeleted: true } : t).filter(t => !t.isDeleted));
+    updateAndPersistTests(prev => prev.map(t => t.testId === deleteTarget.testId ? { ...t, isDeleted: true } : t).filter(t => !t.isDeleted));
     toast({ type: 'success', title: 'Test Deleted', message: `"${deleteTarget.title}" has been soft-deleted.` });
     setDeleteTarget(null);
   };
@@ -93,12 +106,12 @@ export default function TestListPage() {
   const handleToggleStatus = (test, e) => {
     e.stopPropagation();
     const nextStatus = test.status === 'Draft' ? 'Published' : test.status === 'Published' ? 'Archived' : 'Draft';
-    setTests(prev => prev.map(t => t.testId === test.testId ? { ...t, status: nextStatus } : t));
+    updateAndPersistTests(prev => prev.map(t => t.testId === test.testId ? { ...t, status: nextStatus } : t));
     toast({ type: 'info', title: 'Status Changed', message: `"${test.title}" is now ${nextStatus}.` });
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-5">
+    <div className="max-w-[1250px] mx-auto space-y-5">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -149,17 +162,16 @@ export default function TestListPage() {
 
       {/* Table Container */}
       <div className="bg-white rounded-[14px] border border-slate-200/80 shadow-sm overflow-hidden">
-        <table className="w-full table-auto">
+        <table className="w-full text-left table-fixed">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/40 text-left">
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[32%]">Test Name</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Marks</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sections</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Questions</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Created</th>
-              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+            <tr className="border-b border-slate-100 bg-slate-50/40">
+              <th className="px-5 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[36%]">Test Name</th>
+              <th className="px-3 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[14%]">Duration</th>
+              <th className="px-3 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[12%]">Sections</th>
+              <th className="px-3 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[12%]">Questions</th>
+              <th className="px-3 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[14%]">Status</th>
+              <th className="px-3 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[12%]">Created</th>
+              <th className="px-4 py-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right w-[100px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -167,7 +179,7 @@ export default function TestListPage() {
               Array(5).fill(0).map((_, i) => <SkeletonRow key={i} />)
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-0">
+                <td colSpan={7} className="py-0">
                   <EmptyState
                     icon={<FiFileText className="w-7 h-7" />}
                     title="No tests found"
@@ -194,29 +206,24 @@ export default function TestListPage() {
                     <div className="w-8 h-8 rounded-[10px] bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center mr-3 flex-shrink-0">
                       <FiFileText className="w-3.5 h-3.5" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 pr-2">
                       <p className="text-sm font-semibold text-slate-800 group-hover:text-[#2563EB] transition-colors truncate">{test.title}</p>
-                      {test.description && <p className="text-[10px] text-slate-400 truncate max-w-[220px] mt-0.5">{test.description}</p>}
+                      {test.description && <p className="text-[10px] text-slate-400 truncate max-w-[210px] mt-0.5">{test.description}</p>}
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-3 py-4">
                   <span className="flex items-center text-xs text-slate-600 font-medium">
-                    <FiClock className="w-3.5 h-3.5 mr-1 text-slate-400" />{test.durationMinutes} min
+                    <FiClock className="w-3.5 h-3.5 mr-1 text-slate-400 flex-shrink-0" />{test.durationMinutes} min
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className="flex items-center text-xs text-slate-600 font-medium">
-                    <FiAward className="w-3.5 h-3.5 mr-1 text-slate-400" />{test.totalMarks}
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">{test.sectionsCount}</td>
-                <td className="px-4 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">{test.questionsCount}</td>
-                <td className="px-4 py-4 whitespace-nowrap" onClick={(e) => handleToggleStatus(test, e)} title="Click to change status">
+                <td className="px-3 py-4 text-xs font-semibold text-slate-700">{test.sectionsCount}</td>
+                <td className="px-3 py-4 text-xs font-semibold text-slate-700">{test.questionsCount}</td>
+                <td className="px-3 py-4" onClick={(e) => handleToggleStatus(test, e)} title="Click to change status">
                   <Badge status={test.status} />
                 </td>
-                <td className="px-4 py-4 text-xs text-slate-400 whitespace-nowrap">{test.createdAt}</td>
-                <td className="px-5 py-4 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                <td className="px-3 py-4 text-xs text-slate-400">{test.createdAt}</td>
+                <td className="px-4 py-4 text-right" onClick={e => e.stopPropagation()}>
                   <ActionMenu
                     test={test}
                     onView={t => navigate(`/test-configuration/details/${t.testId}`)}
