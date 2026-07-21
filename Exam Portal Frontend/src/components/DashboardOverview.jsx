@@ -198,7 +198,7 @@ export default function DashboardOverview({ sets, loading, onNavigateToSet, onCr
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                       </button>
                       <button 
-                        onClick={() => onDeleteSet(set.id)} 
+                        onClick={() => onDeleteSet(set)} 
                         className="text-slate-400 hover:text-rose-600 transition-colors p-1"
                         title="Delete Set"
                       >

@@ -1,8 +1,6 @@
 /**
  * Shared Question Bank data store.
  * Both Question Bank and Test Configuration read from this.
- * In a real app this would be fetched from an API.
- * localStorage is used to persist Question Bank changes so Test Config sees them too.
  */
 
 export const INITIAL_QUESTION_SETS = [
@@ -88,18 +86,8 @@ export const INITIAL_QUESTION_SETS = [
   },
 ];
 
-/** Read sets — merges localStorage (Question Bank edits) with defaults */
+/** Read sets — returns default initial question sets */
 export function getQuestionSets() {
-  try {
-    const stored = localStorage.getItem('questionSets');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge: stored sets override defaults; add any extra defaults not yet in stored
-      const storedIds = new Set(parsed.map(s => s.id));
-      const extras = INITIAL_QUESTION_SETS.filter(s => !storedIds.has(s.id));
-      return [...parsed, ...extras];
-    }
-  } catch {}
   return INITIAL_QUESTION_SETS;
 }
 

@@ -7,39 +7,36 @@ const formatQuestionPayload = (payload) => {
   const optD = typeof payload.optionD === 'string' ? payload.optionD : (payload.optionD?.text || '');
   const cAns = (payload.correctOptionId || payload.correctAnswer || 'A').toString().replace(/Option\s+/i, '').trim().toUpperCase();
 
+  const optionsArr = Array.isArray(payload.options) && payload.options.length > 0
+    ? payload.options.map((opt, idx) => {
+        const letter = String.fromCharCode(65 + idx);
+        return {
+          optionId: opt.optionId || letter,
+          text: typeof opt === 'string' ? opt : (opt.text !== undefined ? String(opt.text) : ''),
+        };
+      })
+    : [
+        { optionId: 'A', text: optA },
+        { optionId: 'B', text: optB },
+        { optionId: 'C', text: optC },
+        { optionId: 'D', text: optD },
+      ];
+
   return {
+    questionId: payload.questionId || payload.id,
     questionSetId: payload.questionSetId,
-    questionId: payload.questionId,
     question: payload.question || payload.questionText || payload.text || '',
-    optionA: optA,
-    optionB: optB,
-    optionC: optC,
-    optionD: optD,
-    options: [
-      { optionId: 'A', text: optA },
-      { optionId: 'B', text: optB },
-      { optionId: 'C', text: optC },
-      { optionId: 'D', text: optD },
-    ],
-    correctAnswer: cAns,
+    options: optionsArr,
     correctOptionId: cAns,
-    marks: Number(payload.marks || 1),
+    marks: Number(payload.marks !== undefined ? payload.marks : 1),
   };
 };
 
 /**
  * Service functions for Question Bank Module backend API integration
+ * Endpoint Base: https://yee9ggnjni.execute-api.ap-southeast-1.amazonaws.com/default
  */
 export const questionBankService = {
-  /**
-   * API 0: Get All Question Sets
-   * GET /question-sets
-   */
-  async getQuestionSets() {
-    const response = await api.get('/question-sets');
-    return response.data;
-  },
-
   /**
    * API 1: Create Question Set
    * POST /question-sets
@@ -51,12 +48,29 @@ export const questionBankService = {
   },
 
   /**
-   * API 2: Get Question Set Details & Question List
+   * API 2: Get Question Set Details & Questions List
    * GET /question-sets/{questionSetId}
    * @param {string} questionSetId - e.g. "SET001"
    */
   async getQuestionSet(questionSetId) {
-    const response = await api.get(`/question-sets/${encodeURIComponent(questionSetId)}`);
+    try {
+      const response = await api.get(`/question-sets/${encodeURIComponent(questionSetId)}`);
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
+        return { questionSetId, totalQuestions: 0, questions: [], notFound: true };
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Delete Question Set
+   * DELETE /question-sets/{questionSetId}
+   * @param {string} questionSetId
+   */
+  async deleteQuestionSet(questionSetId) {
+    const response = await api.delete(`/question-sets/${encodeURIComponent(questionSetId)}`);
     return response.data;
   },
 

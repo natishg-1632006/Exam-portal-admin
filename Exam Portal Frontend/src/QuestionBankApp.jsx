@@ -14,9 +14,12 @@ const getOptText = (opt) => {
   return String(opt);
 };
 
+const ALL_KNOWN_SET_IDS = ['SET001', 'SET002', 'SET004'];
+
 const INITIAL_SETS = [
-  { id: 'SET001', questionSetId: 'SET001', name: 'Assessment Set: SET001', updated: 'Active set', questionsCount: 5, status: 'Active' },
-  { id: 'SET002', questionSetId: 'SET002', name: 'Assessment Set: SET002', updated: 'Active set', questionsCount: 0, status: 'Active' },
+  { id: 'SET001', questionSetId: 'SET001', name: 'Assessment Set: SET001', updated: 'Active set', questionsCount: 6, status: 'Active' },
+  { id: 'SET002', questionSetId: 'SET002', name: 'Assessment Set: SET002', updated: 'Active set', questionsCount: 1, status: 'Active' },
+  { id: 'SET004', questionSetId: 'SET004', name: 'Assessment Set: SET004', updated: 'Active set', questionsCount: 0, status: 'Active' },
 ];
 
 export default function QuestionBankApp() {
@@ -31,48 +34,49 @@ export default function QuestionBankApp() {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [editingSet, setEditingSet] = useState(null);
   const [deleteConfirmQuestion, setDeleteConfirmQuestion] = useState(null);
+  const [deleteConfirmSet, setDeleteConfirmSet] = useState(null);
 
   const [loadingSets, setLoadingSets] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load question sets from localStorage or fallback
-  const [sets, setSets] = useState(() => {
-    try {
-      const s = localStorage.getItem('questionSets_api');
-      return s ? JSON.parse(s) : INITIAL_SETS;
-    } catch {
-      return INITIAL_SETS;
-    }
-  });
+  // Pure in-memory state for Question Sets (no localStorage)
+  const [sets, setSets] = useState(INITIAL_SETS);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('questionSets_api', JSON.stringify(sets));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [sets]);
-
-  // Sync initial question count for SET001 & SET002 from backend API on mount
+  // Sync question sets and live question counts from backend API on mount
   useEffect(() => {
     setLoadingSets(true);
-    Promise.all([
-      questionBankService.getQuestionSet('SET001').catch(() => null),
-      questionBankService.getQuestionSet('SET002').catch(() => null),
-    ])
-      .then(([res1, res2]) => {
-        const q1Count = res1 ? (res1.questions || res1.data?.questions || []).filter(q => q.itemType !== 'QUESTION_SET_HEADER').length : 5;
-        const q2Count = res2 ? (res2.questions || res2.data?.questions || []).filter(q => q.itemType !== 'QUESTION_SET_HEADER').length : 1;
 
-        setSets(prev =>
-          prev.map(s => {
-            const sid = s.questionSetId || s.id;
-            if (sid === 'SET001') return { ...s, questionsCount: q1Count };
-            if (sid === 'SET002') return { ...s, questionsCount: q2Count };
-            return s;
-          })
-        );
+    Promise.all(
+      ALL_KNOWN_SET_IDS.map(id =>
+        questionBankService.getQuestionSet(id)
+          .then(res => ({ id, data: res }))
+          .catch(() => ({ id, data: null }))
+      )
+    )
+      .then(results => {
+        const activeSets = [];
+
+        results.forEach(({ id, data }) => {
+          if (data && !data.notFound) {
+            const rawQuestions = data.questions || data.data?.questions || [];
+            const validQuestions = rawQuestions.filter(q => q.itemType !== 'QUESTION_SET_HEADER' && (q.questionId || q.id || q.question));
+            const count = data.totalQuestions !== undefined ? data.totalQuestions : validQuestions.length;
+            const setTitle = data.setDetails?.title || data.title || `Assessment Set: ${id}`;
+            activeSets.push({
+              id,
+              questionSetId: id,
+              name: setTitle,
+              updated: 'Active set',
+              questionsCount: count,
+              status: 'Active',
+            });
+          }
+        });
+
+        if (activeSets.length > 0) {
+          setSets(activeSets);
+        }
       })
       .finally(() => {
         setLoadingSets(false);
@@ -133,15 +137,11 @@ export default function QuestionBankApp() {
       );
     } catch (err) {
       console.error('Failed to fetch question set details:', err);
-      if (err.message && err.message.includes('404')) {
-        setQuestions([]);
-      } else {
-        toast && toast({ type: 'error', title: 'Error Loading Set', message: err.message });
-      }
+      setQuestions([]);
     } finally {
       setLoadingQuestions(false);
     }
-  }, [toast]);
+  }, []);
 
   // Handle set navigation
   const handleNavigateToSet = (setObj) => {
@@ -235,6 +235,28 @@ export default function QuestionBankApp() {
     }
   };
 
+  // API 7: Delete Question Set
+  const handleDeleteSetConfirm = async () => {
+    if (!deleteConfirmSet) return;
+    const setId = typeof deleteConfirmSet === 'string'
+      ? deleteConfirmSet
+      : (deleteConfirmSet.questionSetId || deleteConfirmSet.id || deleteConfirmSet.setId);
+
+    if (!setId || setId === 'undefined') return;
+
+    setSubmitting(true);
+    try {
+      await questionBankService.deleteQuestionSet(setId);
+      toast && toast({ type: 'success', title: 'Question Set Deleted', message: `Question Set '${setId}' deleted successfully!` });
+      setSets(prev => prev.filter(s => s.questionSetId !== setId && s.id !== setId));
+      setDeleteConfirmSet(null);
+    } catch (err) {
+      toast && toast({ type: 'error', title: 'Failed to Delete Set', message: err.message });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleToggleArchiveSet = (setId) => {
     setSets(prev =>
       prev.map(s => (s.questionSetId === setId || s.id === setId ? { ...s, status: s.status === 'Archived' ? 'Active' : 'Archived' } : s))
@@ -251,7 +273,7 @@ export default function QuestionBankApp() {
           onNavigateToSet={handleNavigateToSet}
           onCreateSet={() => { setEditingSet(null); setIsCreateSetOpen(true); }}
           onEditSet={(s) => { setEditingSet(s); setIsCreateSetOpen(true); }}
-          onDeleteSet={(setId) => setSets(prev => prev.filter(s => s.questionSetId !== setId && s.id !== setId))}
+          onDeleteSet={(setObj) => setDeleteConfirmSet(setObj)}
           onToggleArchiveSet={handleToggleArchiveSet}
         />
       ) : (
@@ -284,6 +306,17 @@ export default function QuestionBankApp() {
         initialData={editingQuestion}
         currentQuestionSetId={currentSetId}
         loading={submitting}
+      />
+
+      {/* Delete Question Set Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmSet}
+        title="Delete Question Set?"
+        description={`Are you sure you want to delete question set '${deleteConfirmSet?.questionSetId || deleteConfirmSet?.id}'? This will delete all associated questions.`}
+        confirmLabel="Delete Question Set"
+        danger
+        onConfirm={handleDeleteSetConfirm}
+        onCancel={() => setDeleteConfirmSet(null)}
       />
 
       {/* Delete Question Confirmation */}
